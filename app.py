@@ -88,11 +88,14 @@ async def travel_planner(request_data: TravelRequest):
         print("ERROR:", exc)
         traceback.print_exc()
 
-        status_code = 429 if getattr(exc, "status_code", None) == 429 else 500
+        provider_status = getattr(exc, "status_code", None)
+        status_code = 429 if provider_status == 429 else 502 if provider_status == 401 else 500
         error_message = (
             "The AI provider is temporarily rate-limited. Please wait a moment "
             "and try again."
             if status_code == 429
+            else "The AI provider rejected the API key. Check GROQ_API_KEY in Vercel."
+            if status_code == 502
             else str(exc)
         )
 
@@ -136,11 +139,14 @@ async def approve_travel_plan(request_data: ApprovalRequest):
         print("APPROVAL ERROR:", exc)
         traceback.print_exc()
 
-        status_code = 429 if getattr(exc, "status_code", None) == 429 else 500
+        provider_status = getattr(exc, "status_code", None)
+        status_code = 429 if provider_status == 429 else 502 if provider_status == 401 else 500
         error_message = (
             "The AI provider is temporarily rate-limited. Please wait a moment "
             "and try again."
             if status_code == 429
+            else "The AI provider rejected the API key. Check GROQ_API_KEY in Vercel."
+            if status_code == 502
             else str(exc)
         )
 
