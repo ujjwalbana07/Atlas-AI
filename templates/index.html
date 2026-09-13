@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Atlas AI</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/travel-theme.css">
 </head>
 <body>
   <div class="page-bg">
@@ -16,21 +17,21 @@
   <main class="app-container">
     <section class="hero-section">
       <div class="badge">
-        ✈️ Atlas AI — LangGraph, MCP, Supervisor, Guardrails & HITL
+        ✦ Atlas AI / your travel studio
       </div>
-      <h1>Plan Your Perfect Trip with AI</h1>
+      <h1>Go somewhere worth remembering.</h1>
       <p>
-        Search flights, discover hotels, check weather, assess your budget,
-        and review the AI-generated draft before the final itinerary is created.
+        Tell us what you are dreaming about. We will turn the loose idea into a
+        thoughtful route, with room for your edits before anything feels final.
       </p>
     </section>
 
     <section class="planner-card">
       <div class="card-header">
         <div>
-          <h2>Where do you want to go?</h2>
+          <h2>What is the trip you have in mind?</h2>
           <p>
-            Example: Plan a complete 7 days Japan trip from Bangladesh under 2 lakhs.
+            Start with a place, a pace, a budget, or just a feeling.
           </p>
         </div>
         <div class="status-pill">
@@ -69,8 +70,8 @@
     <section id="workflowSection" class="workflow-section hidden">
       <div class="workflow-header">
         <div>
-          <span class="eyebrow">Supervisor Agent</span>
-          <h2>Execution Plan</h2>
+          <span class="eyebrow">Behind the route</span>
+          <h2>How your trip is taking shape</h2>
         </div>
         <span id="guardrailBadge" class="guardrail-badge">Guardrail passed</span>
       </div>
@@ -81,7 +82,7 @@
     <section id="resultSection" class="result-section hidden">
       <div class="result-header">
         <div>
-          <h2 id="resultTitle">Your AI Travel Plan</h2>
+          <h2 id="resultTitle">Your travel notes</h2>
           <p id="threadInfo">Thread ID: -</p>
         </div>
         <div class="result-actions">
@@ -99,8 +100,8 @@
     <section id="approvalSection" class="approval-section hidden">
       <div class="approval-icon">👤</div>
       <div class="approval-content">
-        <span class="eyebrow">Human-in-the-Loop</span>
-        <h2>Review the draft itinerary</h2>
+        <span class="eyebrow">Your say matters</span>
+        <h2>Make this trip yours</h2>
         <p id="approvalRequest">
           Approve the draft or provide feedback before the final plan is generated.
         </p>
@@ -126,7 +127,7 @@
   </main>
 
   <footer>
-    Built with FastAPI, LangGraph, Groq, PostgreSQL, Tavily, AviationStack and MCP
+    Atlas AI · made for curious travellers
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
