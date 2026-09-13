@@ -1,11 +1,7 @@
-.git
-.env
-.env.*
-!.env.example
+# Environments
 .venv
-venv
-env
-__pycache__
-*.py[cod]
-.pytest_cache
-.DS_Store
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
