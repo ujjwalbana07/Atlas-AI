@@ -665,7 +665,8 @@ Return only the complete revised itinerary, not a summary of the changes.
         [
             SystemMessage(content="You revise travel itineraries exactly according to user feedback."),
             HumanMessage(content=prompt),
-        ]
+        ],
+        max_tokens=2500,
     )
 
     return {

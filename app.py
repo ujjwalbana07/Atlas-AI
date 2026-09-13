@@ -88,11 +88,19 @@ async def travel_planner(request_data: TravelRequest):
         print("ERROR:", exc)
         traceback.print_exc()
 
+        status_code = 429 if getattr(exc, "status_code", None) == 429 else 500
+        error_message = (
+            "The AI provider is temporarily rate-limited. Please wait a moment "
+            "and try again."
+            if status_code == 429
+            else str(exc)
+        )
+
         return JSONResponse(
-            status_code=500,
+            status_code=status_code,
             content={
                 "success": False,
-                "error": str(exc),
+                "error": error_message,
             },
         )
 
@@ -128,11 +136,19 @@ async def approve_travel_plan(request_data: ApprovalRequest):
         print("APPROVAL ERROR:", exc)
         traceback.print_exc()
 
+        status_code = 429 if getattr(exc, "status_code", None) == 429 else 500
+        error_message = (
+            "The AI provider is temporarily rate-limited. Please wait a moment "
+            "and try again."
+            if status_code == 429
+            else str(exc)
+        )
+
         return JSONResponse(
-            status_code=500,
+            status_code=status_code,
             content={
                 "success": False,
-                "error": str(exc),
+                "error": error_message,
             },
         )
 
