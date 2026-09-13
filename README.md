@@ -111,6 +111,25 @@ The app can also be started with:
 python app.py
 ```
 
+## Deploying To Vercel
+
+The repository includes `api/index.py` and `vercel.json` for Vercel's Python runtime. Connect the GitHub repository to a Vercel project and deploy the `main` branch.
+
+Add these production environment variables in the Vercel project settings before testing travel generation:
+
+```dotenv
+DATABASE_URL=postgresql://user:password@host:5432/database
+GROQ_API_KEY=your_groq_key
+GROQ_MODEL=openai/gpt-oss-120b
+TAVILY_API_KEY=your_tavily_key
+AVIATION_STACK_API_KEY=your_aviationstack_key
+OPENWEATHER_API_KEY=your_openweather_key
+DEFAULT_ORIGIN_CITY=Dallas, Texas
+DEFAULT_ORIGIN_IATA=DFW
+```
+
+The home page and `/health` endpoint can initialize without the graph secrets. Travel generation loads the LangGraph backend only when `/api/travel` or `/api/travel/approve` is called, so missing production configuration produces a readable API error instead of an import-time Vercel function crash.
+
 ## API
 
 ### Create a draft
