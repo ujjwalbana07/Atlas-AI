@@ -1,87 +1,181 @@
-# Multi-Agent-System-using-LangGraph-MCP-Supervisor-Guardrails-HITL
+# Atlas AI
 
-A demo multi-agent system that uses LangGraph and MCP to implement a travel-planning assistant with a Supervisor, input Guardrails, and Human-In-The-Loop (HITL) approval flows. The project includes a FastAPI frontend, example MCP server, and client helpers to demonstrate how agents, supervisors, and guardrails can be composed into a safe, reviewable planning pipeline.
+Atlas AI is a reviewable travel-planning workspace. Describe the trip you want, let a group of specialist agents assemble the research, then edit or approve the draft before the final itinerary is written.
 
-Key ideas:
-- Multi-agent coordination using LangGraph and MCP
-- Supervisor agent to manage complex workflows
-- Input guardrails to validate user requests
-- Human-in-the-loop approval for generated plans
+The interface is designed to feel like a travel studio rather than a chat box: it helps turn a rough idea into a practical route with flights, accommodation, weather, budget guidance, and day-by-day plans.
 
-Contents
-- `app.py`: FastAPI web frontend and API endpoints
-- `backend.py`: core agent orchestration / travel-planner logic
-- `mcp_client.py`: client helpers to interact with the MCP server
-- `custom_weather_mcp_server.py`: example MCP server for weather checks
-- `templates/`, `static/`: frontend UI assets (HTML, JS, CSS)
+## What It Does
 
-Features
-- Interactive web UI for sending travel planning prompts
-- Endpoint for drafting travel plans and separate approval endpoint
-- Example MCP server demonstrating domain adapters (weather, checkpoints)
+- **Supervisor routing** chooses the useful specialists for each request.
+- **Travel guardrails** keep unrelated or unsafe requests out of the planning workflow.
+- **Global airport lookup** searches the bundled worldwide catalog of more than 7,800 IATA airports using city names, airport names, IATA codes, and ICAO codes. There is no country whitelist or single-country restriction.
+- **Flight research** uses AviationStack MCP when the service is configured and supplements it with the global airport catalog.
+- **Hotel research** uses Tavily MCP.
+- **Weather research** uses the local weather MCP server and OpenWeather.
+- **Budget analysis** highlights cost categories, risks, and ways to save.
+- **Human-in-the-loop review** pauses after the draft itinerary is created.
+- **Feedback-driven revisions** regenerate the itinerary before producing the final answer. Explicit changes such as “make this 5-day trip 10 days” are treated as required changes.
+- **Export tools** let you copy the result or download it as a PDF from the browser.
 
-Prerequisites
-- Python 3.10+ (recommended)
-- Git (to clone the repo)
-- A virtual environment tool (venv) or similar
+## How The Workflow Works
 
-Quick start (Windows)
-
-1. Create and activate a virtual environment
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1    # PowerShell
+```mermaid
+flowchart LR
+		A[Travel request] --> B[Guardrail]
+		B --> C[Supervisor]
+		C --> D[Specialist agents]
+		D --> E[Draft itinerary]
+		E --> F{Human review}
+		F -->|Approve| G[Final travel plan]
+		F -->|Request changes| H[Revise itinerary]
+		H --> G
 ```
 
-2. Install dependencies
+The draft is stored in a PostgreSQL-backed LangGraph checkpoint. The approval request and its thread ID can therefore be resumed through the browser or API.
 
-```powershell
-pip install -r requirements.txt
+## Project Structure
+
+| Path | Purpose |
+| --- | --- |
+| `app.py` | FastAPI application, browser route, API endpoints, and health check |
+| `backend.py` | LangGraph state, supervisor, specialist agents, global airport lookup, HITL routing, and final response generation |
+| `mcp_client.py` | MCP client configuration for Tavily, AviationStack, and weather tools |
+| `custom_weather_mcp_server.py` | Local MCP server exposing current weather and forecast tools |
+| `templates/index.html` | Travel studio page and HITL controls |
+| `static/style.css` | Base layout styles |
+| `static/travel-theme.css` | Travel-focused visual theme |
+| `requirements.txt` | Python dependencies |
+
+## Requirements
+
+- Python 3.10 or newer
+- PostgreSQL database with a reachable connection string
+- A Groq API key
+- `uv`/`uvx` for the AviationStack MCP adapter
+- Optional live-service keys for Tavily, AviationStack, and OpenWeather
+
+The airport catalog itself is bundled through `airportsdata`, so global airport lookup does not depend on a live AviationStack response.
+
+## Local Setup
+
+### macOS and Linux
+
+```bash
+git clone https://github.com/ujjwalbana07/Atlas-AI.git
+cd Atlas-AI
+
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-3. Run the FastAPI app (development)
+### Windows PowerShell
 
 ```powershell
-# option A (run module)
-python app.py
+git clone https://github.com/ujjwalbana07/Atlas-AI.git
+cd Atlas-AI
 
-# option B (uvicorn)
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Create a `.env` file in the project root:
+
+```dotenv
+DATABASE_URL=postgresql://user:password@host:5432/database
+GROQ_API_KEY=your_groq_key
+GROQ_MODEL=openai/gpt-oss-120b
+
+# Required for the related live MCP services.
+TAVILY_API_KEY=your_tavily_key
+AVIATION_STACK_API_KEY=your_aviationstack_key
+OPENWEATHER_API_KEY=your_openweather_key
+
+# Optional default origin when a request does not specify one.
+DEFAULT_ORIGIN_CITY=Dallas, Texas
+DEFAULT_ORIGIN_IATA=DFW
+```
+
+Start the development server:
+
+```bash
 uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
 
-4. Open the web UI
+Open http://127.0.0.1:8000 in a browser.
 
-Visit http://127.0.0.1:8000 in your browser to use the Atlas AI frontend.
+The app can also be started with:
 
-Running the MCP server (example)
-- The repository includes `custom_weather_mcp_server.py` as an example MCP server. Run it in a separate terminal if you want to experiment with custom adapters used by the demo.
-
-```powershell
-# start example MCP server (if needed)
-python custom_weather_mcp_server.py
+```bash
+python app.py
 ```
 
-API Endpoints
-- `POST /api/travel` — create or resume a travel planning thread. JSON: `{ "message": "<user prompt>", "thread_id": "optional-thread-id" }`
-- `POST /api/travel/approve` — approve or request revisions for a draft. JSON: `{ "thread_id": "<id>", "approved": true|false, "feedback": "optional" }`
-- `GET /health` — basic health check and features list
+## API
 
-Configuration & environment
-- Secrets and API keys are not included in the repo. Use environment variables or a `.env` file for any required keys consumed by `langgraph`, `langchain`, or other adapters.
+### Create a draft
 
-Development notes
-- The project keeps synchronous convenience wrappers in `backend.py` while running an async FastAPI server — `nest_asyncio` is applied in `app.py` to allow the sync helpers to call async MCP helpers.
-- Tests are not included; to experiment, interact with the web UI or call the API endpoints directly.
+```bash
+curl -X POST http://127.0.0.1:8000/api/travel \
+	-H "Content-Type: application/json" \
+	-d '{"message":"Plan a 10-day Japan trip with flights, hotels, weather and a mid-range budget."}'
+```
 
-Contributing
-- Contributions are welcome. Please open issues or pull requests for bug fixes, documentation improvements, or new adapter examples.
+The response includes a `thread_id`, the draft itinerary, selected agents, and `requires_approval: true` when the graph is paused for review.
 
-License
-- This repository follows the license in the `LICENSE` file.
+### Approve a draft
 
-Acknowledgements
-- Built as a demonstration of LangGraph + MCP patterns with supervisor and guardrail concepts.
+```bash
+curl -X POST http://127.0.0.1:8000/api/travel/approve \
+	-H "Content-Type: application/json" \
+	-d '{"thread_id":"user_<id>","approved":true,"feedback":""}'
+```
 
-Contact
-- For questions or suggestions, open an issue or contact the repository owner.
+### Request a revision
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/travel/approve \
+	-H "Content-Type: application/json" \
+	-d '{"thread_id":"user_<id>","approved":false,"feedback":"Change the trip from 5 days to 10 days and add the extra days."}'
+```
+
+### Health check
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+## Global Airport Coverage
+
+Global lookup is backed by `airportsdata.load("IATA")`. The application loads the complete catalog and does not filter airports by country. A request can reference:
+
+- Any city or country supported by the catalog
+- IATA codes such as `LHR`, `DEL`, or `HND`
+- ICAO codes such as `EGLL`, `VIDP`, or `RJTT`
+- Airport names such as Heathrow, Indira Gandhi, or Haneda
+
+When a request names an airport or city, matching records are passed into the flight agent with their IATA code, ICAO code, airport name, city, and country. When no specific airport is named, the agent receives the full-catalog count and is instructed to reason globally rather than assume one country.
+
+## Troubleshooting
+
+- **Python version errors:** use Python 3.10 or newer. Some current LangGraph pins do not install on Python 3.9.
+- **Missing `DATABASE_URL` or `GROQ_API_KEY`:** add the values to `.env` before importing the backend.
+- **AviationStack or weather errors:** the relevant live service key or MCP adapter may be unavailable. The workflow catches those failures and labels live data as unavailable instead of blocking the entire plan.
+- **`uvx` not found:** install `uv`, then verify it with `uvx --version`.
+- **Approval does not resume:** use the same `thread_id` returned by `POST /api/travel` when calling the approval endpoint.
+
+## Development
+
+The FastAPI routes are asynchronous, while the existing LangGraph convenience functions are synchronous. `nest_asyncio` is applied in `app.py` so the MCP helpers can be called from the current workflow.
+
+Before opening a pull request, run:
+
+```bash
+python -m py_compile app.py backend.py mcp_client.py custom_weather_mcp_server.py
+```
+
+Then exercise a normal draft, an approval, and a revision through the browser or API.
+
+## License
+
+See [LICENSE](LICENSE).

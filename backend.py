@@ -19,6 +19,7 @@ import operator
 import uuid
 import asyncio
 import json
+import airportsdata
 import psycopg
 from psycopg.rows import dict_row
 from langgraph.graph import StateGraph, START, END
@@ -161,6 +162,54 @@ def _bounded_text(value: Any, max_chars: int) -> str:
     if len(text) <= max_chars:
         return text
     return text[:max_chars] + "\n[additional context omitted]"
+
+
+WORLD_AIRPORTS = airportsdata.load("IATA")
+
+
+def _worldwide_airport_context(query: str) -> str:
+    """Find airports globally without applying a country restriction."""
+    query_lower = query.lower()
+    matches = []
+
+    for airport in WORLD_AIRPORTS.values():
+        city = str(airport.get("city", "")).lower()
+        name = str(airport.get("name", "")).lower()
+        iata = str(airport.get("iata", "")).lower()
+        icao = str(airport.get("icao", "")).lower()
+
+        if (
+            (city and city in query_lower)
+            or (name and name in query_lower)
+            or (iata and iata in query_lower)
+            or (icao and icao in query_lower)
+        ):
+            matches.append(airport)
+
+    if not matches:
+        return (
+            f"Global airport catalog: {len(WORLD_AIRPORTS)} IATA airports "
+            "across countries worldwide. Search the full catalog by city, "
+            "airport name, IATA code, or ICAO code; do not restrict results "
+            "to one country."
+        )
+
+    records = [
+        {
+            "iata": airport.get("iata", ""),
+            "icao": airport.get("icao", ""),
+            "name": airport.get("name", ""),
+            "city": airport.get("city", ""),
+            "country": airport.get("country", ""),
+        }
+        for airport in matches
+    ]
+
+    return (
+        f"Global airport catalog: {len(WORLD_AIRPORTS)} IATA airports "
+        f"worldwide. Matching airports from the full catalog:\n"
+        f"{json.dumps(records, ensure_ascii=True)}"
+    )
 
 
 # =========================
@@ -355,8 +404,8 @@ def flight_agent(state: TravelState):
 
         prompt = FLIGHT_AGENT_PROMPT.format(
             query=query,
-            airport_data=str(airports)[:3000],
-            airline_data=str(airlines)[:3000],
+            airport_data=_worldwide_airport_context(query),
+            airline_data=json.dumps(airlines, ensure_ascii=True),
             default_origin=DEFAULT_ORIGIN_CITY,
             default_origin_iata=DEFAULT_ORIGIN_IATA,
         )
