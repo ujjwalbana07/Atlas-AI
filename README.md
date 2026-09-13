@@ -113,7 +113,7 @@ python app.py
 
 ## Deploying To Vercel
 
-The repository includes `api/index.py` and `vercel.json` for Vercel's Python runtime. Connect the GitHub repository to a Vercel project and deploy the `main` branch.
+Vercel detects the top-level `app.py` FastAPI entrypoint automatically. Connect the GitHub repository to a Vercel project and deploy the `main` branch.
 
 Add these production environment variables in the Vercel project settings before testing travel generation:
 
